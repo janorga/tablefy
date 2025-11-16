@@ -16,10 +16,7 @@ func Render(m model.Model) string {
 // applyScrollOffset applies scroll offset to rows
 func applyScrollOffset(rows [][]string, scrollOffset, visibleRows int) [][]string {
 	startRow := 1 + scrollOffset // +1 to skip header
-	endRow := startRow + visibleRows
-	if endRow > len(rows) {
-		endRow = len(rows)
-	}
+	endRow := min(startRow+visibleRows, len(rows))
 
 	// Build rows to display (header + visible data rows)
 	var displayRows [][]string
