@@ -26,6 +26,7 @@ type model struct {
 	currentColumn   int
 	selectedColumns map[int]bool
 	viewMode        ViewMode
+	scrollOffset    int
 	termWidth       int
 	termHeight      int
 }
@@ -46,6 +47,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.viewMode == ZoomView {
 				// Exit zoom mode
 				m.viewMode = NormalView
+				m.scrollOffset = 0 // Reset scroll when exiting zoom
 				return m, nil
 			}
 			return m, tea.Quit
@@ -56,6 +58,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right", "l":
 			if m.viewMode == NormalView && m.currentColumn < len(m.rows[0])-1 {
 				m.currentColumn++
+			}
+		case "up", "k":
+			// Scroll up
+			if m.scrollOffset > 0 {
+				m.scrollOffset--
+			}
+		case "down", "j":
+			// Scroll down
+			maxScroll := m.getMaxScroll()
+			if m.scrollOffset < maxScroll {
+				m.scrollOffset++
 			}
 		case "s", "S":
 			// Toggle selection of current column
@@ -70,6 +83,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.viewMode == NormalView && len(m.selectedColumns) > 0 {
 				// Enter zoom mode with selected columns
 				m.viewMode = ZoomView
+				m.scrollOffset = 0 // Reset scroll when entering zoom
 			}
 		}
 	case tea.WindowSizeMsg:
@@ -77,6 +91,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.termHeight = msg.Height
 	}
 	return m, nil
+}
+
+// getMaxScroll calculates the maximum scroll offset
+func (m model) getMaxScroll() int {
+	// Account for header, borders, and help text (approximately 6 lines)
+	visibleRows := m.termHeight - 6
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+
+	// Number of data rows (excluding header)
+	dataRows := len(m.rows) - 1
+
+	maxScroll := dataRows - visibleRows
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	return maxScroll
 }
 
 // View renders the UI
@@ -93,11 +125,31 @@ func (m model) renderNormalView() string {
 		return "No data to display"
 	}
 
+	// Calculate visible rows based on terminal height
+	visibleRows := m.termHeight - 6 // Account for header, borders, help text
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+
+	// Apply scroll offset to get visible subset of rows
+	startRow := 1 + m.scrollOffset // +1 to skip header
+	endRow := startRow + visibleRows
+	if endRow > len(m.rows) {
+		endRow = len(m.rows)
+	}
+
+	// Build rows to display (header + visible data rows)
+	var displayRows [][]string
+	displayRows = append(displayRows, m.rows[0]) // Always include header
+	if startRow < len(m.rows) {
+		displayRows = append(displayRows, m.rows[startRow:endRow]...)
+	}
+
 	// Calculate optimal widths
 	widths := calculateColumnWidths(m.rows, m.termWidth)
 
 	// Truncate rows according to widths
-	truncatedRows := truncateRows(m.rows, widths)
+	truncatedRows := truncateRows(displayRows, widths)
 
 	// Create a new table
 	t := table.New().
@@ -125,8 +177,16 @@ func (m model) renderNormalView() string {
 		t.Row(truncatedRows[i]...)
 	}
 
+	// Build help text with scroll indicator
 	selectedCount := len(m.selectedColumns)
-	helpText := fmt.Sprintf("\n← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom | q: Quit", selectedCount)
+	totalDataRows := len(m.rows) - 1
+	scrollInfo := ""
+	if totalDataRows > visibleRows {
+		currentPos := m.scrollOffset + 1
+		maxPos := totalDataRows - visibleRows + 1
+		scrollInfo = fmt.Sprintf(" | ↑↓/jk: Scroll (%d/%d)", currentPos, maxPos)
+	}
+	helpText := fmt.Sprintf("\n← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom%s | q: Quit", selectedCount, scrollInfo)
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Render(helpText)
@@ -155,23 +215,44 @@ func (m model) renderZoomView() string {
 	}
 
 	// Extract selected columns
+	numSelectedCols := len(selectedIndices)
 	zoomedRows := make([][]string, len(m.rows))
 	for i, row := range m.rows {
-		zoomedRows[i] = make([]string, 0, len(selectedIndices))
-		for _, colIdx := range selectedIndices {
+		zoomedRows[i] = make([]string, numSelectedCols)
+		for j, colIdx := range selectedIndices {
 			if colIdx < len(row) {
-				zoomedRows[i] = append(zoomedRows[i], row[colIdx])
+				zoomedRows[i][j] = row[colIdx]
 			} else {
-				zoomedRows[i] = append(zoomedRows[i], "")
+				zoomedRows[i][j] = ""
 			}
 		}
 	}
 
-	// Calculate optimal widths for zoomed table
+	// Calculate visible rows based on terminal height (account for title and help)
+	visibleRows := m.termHeight - 8 // Account for title, header, borders, help text
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+
+	// Apply scroll offset to get visible subset of rows
+	startRow := 1 + m.scrollOffset // +1 to skip header
+	endRow := startRow + visibleRows
+	if endRow > len(zoomedRows) {
+		endRow = len(zoomedRows)
+	}
+
+	// Build rows to display (header + visible data rows)
+	var displayRows [][]string
+	displayRows = append(displayRows, zoomedRows[0]) // Always include header
+	if startRow < len(zoomedRows) {
+		displayRows = append(displayRows, zoomedRows[startRow:endRow]...)
+	}
+
+	// Calculate optimal widths for zoomed table (use all rows for proper width calculation)
 	widths := calculateColumnWidths(zoomedRows, m.termWidth)
 
-	// Truncate rows according to widths
-	truncatedRows := truncateRows(zoomedRows, widths)
+	// Truncate only the display rows according to widths
+	truncatedRows := truncateRows(displayRows, widths)
 
 	// Create table
 	t := table.New().
@@ -184,9 +265,19 @@ func (m model) renderZoomView() string {
 		})
 
 	// Add header and rows
-	t.Headers(truncatedRows[0]...)
-	for i := 1; i < len(truncatedRows); i++ {
-		t.Row(truncatedRows[i]...)
+	if len(truncatedRows) > 0 {
+		t.Headers(truncatedRows[0]...)
+		for i := 1; i < len(truncatedRows); i++ {
+			// Debug: Ensure all rows have the same number of columns
+			if len(truncatedRows[i]) != len(truncatedRows[0]) {
+				// Pad or truncate to match header length
+				row := make([]string, len(truncatedRows[0]))
+				copy(row, truncatedRows[i])
+				t.Row(row...)
+			} else {
+				t.Row(truncatedRows[i]...)
+			}
+		}
 	}
 
 	// Build column names for title
@@ -200,13 +291,22 @@ func (m model) renderZoomView() string {
 	title := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#9D4EDD")).
-		Render(fmt.Sprintf("Zoomed: %s\n\n", strings.Join(columnNames, ", ")))
+		Render(fmt.Sprintf("Zoomed: %s", strings.Join(columnNames, ", ")))
 
+	// Build help text with scroll indicator
+	totalDataRows := len(zoomedRows) - 1
+	scrollInfo := ""
+	if totalDataRows > visibleRows {
+		currentPos := m.scrollOffset + 1
+		maxPos := totalDataRows - visibleRows + 1
+		scrollInfo = fmt.Sprintf(" | ↑↓/jk: Scroll (%d/%d)", currentPos, maxPos)
+	}
+	helpText := fmt.Sprintf("q: Exit zoom%s", scrollInfo)
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
-		Render("\nq: Exit zoom")
+		Render(helpText)
 
-	return title + t.Render() + help
+	return fmt.Sprintf("%s\n\n%s\n%s", title, t.Render(), help)
 }
 
 // parseTable parses the input and converts it to rows and columns
@@ -463,6 +563,7 @@ func main() {
 		currentColumn:   0,
 		selectedColumns: make(map[int]bool),
 		viewMode:        NormalView,
+		scrollOffset:    0,
 		termWidth:       width,
 		termHeight:      height,
 	}
