@@ -9,7 +9,7 @@ Interactive table formatter for bash command output. Converts text with table fo
 ## Installation
 
 ```bash
-go build -o bin/tablefy
+go build -o bin/tablefy cmd/tablefy/main.go
 ```
 
 ## Usage
@@ -17,14 +17,8 @@ go build -o bin/tablefy
 Tablefy reads from stdin and provides an interactive interface to explore your data:
 
 ```bash
-# Example with ls -l
-ls -l | ./bin/tablefy
-
-# Example with ps
-ps aux | ./bin/tablefy
-
-# Example with df
-df -h | ./bin/tablefy
+# Example with docker ps 
+docker ps | ./bin/tablefy
 
 # Example with custom output
 echo "NAME  AGE  CITY
@@ -61,27 +55,6 @@ Pedro  28  Valencia" | ./bin/tablefy
 - This new table applies all the same formatting rules (width calculation, truncation, etc.)
 - Press **q** to exit zoom and return to the normal view
 
-## Example output
-
-Input:
-```
-NAME    AGE    CITY
-John    25     Madrid
-Maria   30     Barcelona
-```
-
-Output (with colors and borders):
-```
-┌───────┬─────┬───────────┐
-│ NAME  │ AGE │ CITY      │
-├───────┼─────┼───────────┤
-│ John  │ 25  │ Madrid    │
-│ Maria │ 30  │ Barcelona │
-└───────┴─────┴───────────┘
-
-← → / h l: Navigate | s: Toggle select (0 selected) | Enter: Zoom | q: Quit
-```
-
 ### Workflow example:
 1. Run `ps aux | ./bin/tablefy`
 2. Use arrow keys to navigate to the "USER" column
@@ -90,3 +63,4 @@ Output (with colors and borders):
 5. Press **s** to select it too
 6. Press **Enter** to zoom - now you see only USER and COMMAND columns in a new table
 7. Press **q** to return to the full table view
+
