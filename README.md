@@ -2,6 +2,10 @@
 
 Interactive table formatter for bash command output. Converts text with table format into beautiful tables using lipgloss and bubbletea.
 
+## Requirements
+
+- Go 1.25.4 or higher
+
 ## Installation
 
 ```bash
@@ -33,6 +37,7 @@ Pedro  28  Valencia" | ./bin/tablefy
 
 ### Interactive Navigation
 - **← → / h l**: Navigate between columns
+- **↑ ↓ / j k**: Scroll through rows
 - **s**: Toggle selection of current column (can select multiple)
 - **Enter / Space**: Zoom into selected columns (creates new table with only those columns)
 - **q**: Exit zoom mode or quit the application
