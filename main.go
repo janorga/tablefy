@@ -248,8 +248,21 @@ func (m model) renderZoomView() string {
 		displayRows = append(displayRows, zoomedRows[startRow:endRow]...)
 	}
 
-	// Calculate optimal widths for zoomed table (use all rows for proper width calculation)
-	widths := calculateColumnWidths(zoomedRows, m.termWidth)
+	// Calculate optimal widths for zoomed table
+	// First, try to use full widths without truncation
+	widths := calculateFullColumnWidths(zoomedRows)
+
+	// Check if the table fits in the terminal
+	overhead := len(widths)*3 + 1 // borders and padding
+	totalWidth := overhead
+	for _, w := range widths {
+		totalWidth += w
+	}
+
+	// If it doesn't fit, recalculate with terminal width constraint
+	if totalWidth > m.termWidth {
+		widths = calculateColumnWidths(zoomedRows, m.termWidth)
+	}
 
 	// Truncate only the display rows according to widths
 	truncatedRows := truncateRows(displayRows, widths)
@@ -382,6 +395,27 @@ func truncateCell(cell string, maxWidth int) string {
 		return cell[:maxWidth]
 	}
 	return cell[:maxWidth-3] + "..."
+}
+
+// calculateFullColumnWidths calculates the natural width for each column without truncation
+func calculateFullColumnWidths(rows [][]string) []int {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	numCols := len(rows[0])
+	widths := make([]int, numCols)
+
+	// Calculate the maximum width of each column
+	for _, row := range rows {
+		for i := 0; i < len(row) && i < numCols; i++ {
+			if len(row[i]) > widths[i] {
+				widths[i] = len(row[i])
+			}
+		}
+	}
+
+	return widths
 }
 
 // calculateColumnWidths calculates the optimal width for each column
