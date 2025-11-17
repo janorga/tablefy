@@ -13,6 +13,7 @@ type Model struct {
 	ScrollOffset    int
 	TermWidth       int
 	TermHeight      int
+	AutoExpand      bool
 	renderer        func(Model) string
 }
 
@@ -26,6 +27,7 @@ func New(rows [][]string, termWidth, termHeight int) Model {
 		ScrollOffset:    0,
 		TermWidth:       termWidth,
 		TermHeight:      termHeight,
+		AutoExpand:      false,
 	}
 }
 

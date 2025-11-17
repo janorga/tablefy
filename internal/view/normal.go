@@ -24,6 +24,11 @@ func RenderNormalView(m model.Model) string {
 	// Calculate optimal widths
 	widths := layout.CalculateColumnWidths(m.Rows, m.TermWidth)
 
+	// Apply auto-expand if enabled
+	if m.AutoExpand {
+		widths = layout.CalculateColumnWidthsWithAutoExpand(m.Rows, m.TermWidth, m.CurrentColumn, widths)
+	}
+
 	// Truncate rows according to widths
 	truncatedRows := layout.TruncateRows(displayRows, widths)
 

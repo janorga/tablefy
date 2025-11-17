@@ -13,8 +13,13 @@ import (
 	"tablefy/internal/view"
 )
 
+// Config holds application configuration
+type Config struct {
+	AutoExpand bool
+}
+
 // Run starts the application
-func Run() error {
+func Run(config Config) error {
 	// Read from stdin
 	scanner := bufio.NewScanner(os.Stdin)
 	var input strings.Builder
@@ -45,6 +50,7 @@ func Run() error {
 
 	// Initialize model
 	m := model.New(rows, width, height)
+	m.AutoExpand = config.AutoExpand
 	m.SetRenderer(view.Render)
 
 	// Start bubbletea program
