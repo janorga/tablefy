@@ -49,6 +49,23 @@ Maria  30  Barcelona
 Pedro  28  Valencia" | tablefy
 ```
 
+## Command Line Flags
+
+### Auto-expand mode
+```bash
+tablefy --auto-expand    # Long form
+tablefy -a               # Short form
+```
+
+Enables auto-expand mode for focused columns with truncated content. When navigating to a column that contains truncated cells (marked with "..."), that column automatically expands to show the full content. Other columns shrink proportionally to maintain the terminal width. The column shrinks back to normal when you navigate away.
+
+**Example:**
+```bash
+helm list -A | tablefy --auto-expand
+```
+
+Navigate with arrow keys to any column with truncated content and watch it expand to reveal the full data.
+
 ## Features
 
 ### Interactive Navigation
