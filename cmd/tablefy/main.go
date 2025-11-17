@@ -8,6 +8,10 @@ import (
 	"tablefy/internal/app"
 )
 
+// Version is set by ldflags during build
+// Default value for local builds without version information
+var Version = "dev"
+
 func main() {
 	version := pflag.BoolP("version", "v", false, "Show version information")
 	autoExpand := pflag.BoolP("auto-expand", "a", false, "Auto-expand focused column if it contains truncated cells")
