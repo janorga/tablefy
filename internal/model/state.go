@@ -6,4 +6,5 @@ type ViewMode int
 const (
 	NormalView ViewMode = iota
 	ZoomView
+	FilterView
 )

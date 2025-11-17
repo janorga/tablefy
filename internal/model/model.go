@@ -6,15 +6,19 @@ import (
 
 // Model represents the application state
 type Model struct {
-	Rows            [][]string
-	CurrentColumn   int
-	SelectedColumns map[int]bool
-	ViewMode        ViewMode
-	ScrollOffset    int
-	TermWidth       int
-	TermHeight      int
-	AutoExpand      bool
-	renderer        func(Model) string
+	Rows               [][]string
+	CurrentColumn      int
+	SelectedColumns    map[int]bool
+	ViewMode           ViewMode
+	ScrollOffset       int
+	TermWidth          int
+	TermHeight         int
+	AutoExpand         bool
+	FilterInput        string
+	FilteredRowIndices []int
+	FilterColumnIndex  int
+	FilterScrollOffset int
+	renderer           func(Model) string
 }
 
 // New creates a new model with the given rows

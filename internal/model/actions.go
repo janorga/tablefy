@@ -18,6 +18,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // handleKeyPress processes keyboard input
 func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Handle FilterView input separately
+	if m.ViewMode == FilterView {
+		return m.handleFilterViewInput(msg)
+	}
+
 	switch msg.String() {
 	case "ctrl+c", "esc":
 		return m, tea.Quit
@@ -29,6 +34,17 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		return m, tea.Quit
+	case "f", "F":
+		if m.ViewMode == NormalView {
+			// Enter filter mode
+			m.ViewMode = FilterView
+			m.FilterColumnIndex = m.CurrentColumn
+			m.FilterInput = ""
+			m.FilterScrollOffset = 0
+			// Apply initial filter (empty query shows all rows)
+			m.FilteredRowIndices = ApplyFuzzyFilter(m.Rows, m.FilterColumnIndex, "")
+			return m, nil
+		}
 	case "left", "h":
 		if m.ViewMode == NormalView && m.CurrentColumn > 0 {
 			m.CurrentColumn--
@@ -83,4 +99,35 @@ func (m Model) GetMaxScroll() int {
 		maxScroll = 0
 	}
 	return maxScroll
+}
+
+// handleFilterViewInput handles keyboard input while in FilterView
+func (m Model) handleFilterViewInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		// Cancel filter and return to normal view
+		m.ClearFilter()
+		m.ViewMode = NormalView
+		return m, nil
+	case "enter":
+		// Apply filter and return to normal view
+		m.ViewMode = NormalView
+		// Keep the filter applied - don't clear it
+		return m, nil
+	case "backspace":
+		// Remove last character
+		if len(m.FilterInput) > 0 {
+			m.FilterInput = m.FilterInput[:len(m.FilterInput)-1]
+			m.FilteredRowIndices = ApplyFuzzyFilter(m.Rows, m.FilterColumnIndex, m.FilterInput)
+			m.FilterScrollOffset = 0
+		}
+	default:
+		// Add character to filter input
+		if len(msg.String()) == 1 {
+			m.FilterInput += msg.String()
+			m.FilteredRowIndices = ApplyFuzzyFilter(m.Rows, m.FilterColumnIndex, m.FilterInput)
+			m.FilterScrollOffset = 0
+		}
+	}
+	return m, nil
 }

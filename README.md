@@ -95,8 +95,31 @@ Navigate with arrow keys to any column with truncated content and watch it expan
 - **↑ ↓ / j k**: Scroll through rows
 - **s**: Toggle selection of current column (can select multiple)
 - **Enter / Space**: Zoom into selected columns (creates new table with only those columns)
+- **f**: Fuzzy filter rows by current column values (see below)
 - **q**: Exit zoom mode or quit the application
 - **Esc / Ctrl+C**: Quit the application
+
+### Fuzzy Filter
+Press **f** to enter filter mode for the currently focused column. The fuzzy filter allows you to quickly narrow down rows by searching for values in that column using fuzzy matching.
+
+**How it works:**
+- Navigate to a column you want to filter by
+- Press **f** to activate the fuzzy finder
+- Type a search query (e.g., "run" will match "running", "runner", "runtime")
+- See live previews of matching rows with a count
+- Press **Enter** to apply the filter
+- Press **Esc** to cancel without applying
+
+**Example:**
+```bash
+ps aux | tablefy
+# Navigate to the STAT column (use ← →)
+# Press 'f' to filter
+# Type "S" to show only sleeping processes
+# Press Enter to apply
+```
+
+The fuzzy filter uses closestmatch algorithm for intelligent matching, so you don't need exact strings - typos and partial matches work great!
 
 ### Automatic Formatting
 - Reads input from stdin

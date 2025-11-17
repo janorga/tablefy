@@ -7,6 +7,9 @@ import (
 
 // Render renders the UI based on the current view mode
 func Render(m model.Model) string {
+	if m.ViewMode == model.FilterView {
+		return RenderFilterView(m)
+	}
 	if m.ViewMode == model.ZoomView {
 		return RenderZoomView(m)
 	}
@@ -26,6 +29,11 @@ func applyScrollOffset(rows [][]string, scrollOffset, visibleRows int) [][]strin
 	}
 
 	return displayRows
+}
+
+// GetFilteredRows extracts rows at specified indices (wrapper for model function)
+func GetFilteredRows(rows [][]string, filteredIndices []int) [][]string {
+	return model.GetFilteredRows(rows, filteredIndices)
 }
 
 // sortSelectedColumns sorts the selected column indices
