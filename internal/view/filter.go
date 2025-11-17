@@ -43,9 +43,9 @@ func RenderFilterView(m model.Model) string {
 		StyleFunc(func(row, col int) lipgloss.Style {
 			style := lipgloss.NewStyle().Padding(0, 1)
 
-			// Highlight current filter column
+			// Highlight current filter column with soft purple
 			if col == m.FilterColumnIndex {
-				style = style.Background(lipgloss.Color("#FF6B6B"))
+				style = style.Background(lipgloss.Color("#8B7BA8"))
 			}
 
 			return style.Foreground(lipgloss.Color("252"))
