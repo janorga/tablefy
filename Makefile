@@ -2,6 +2,7 @@
 
 # Get version from git
 VERSION := $(shell git describe --tags --always)
+COMMIT_HASH := $(shell git rev-parse --short HEAD)
 
 help:
 	@echo "tablefy - Makefile targets:"
@@ -14,8 +15,8 @@ help:
 	@echo ""
 
 build:
-	@echo "Building tablefy v$(VERSION)..."
-	go build -ldflags "-X main.Version=$(VERSION)" -o bin/tablefy ./cmd/tablefy
+	@echo "Building tablefy $(VERSION) (commit: $(COMMIT_HASH))..."
+	go build -ldflags "-X main.Version=$(VERSION) -X main.CommitHash=$(COMMIT_HASH)" -o bin/tablefy ./cmd/tablefy
 	@echo "✅ Build complete: bin/tablefy"
 
 build-dev:
@@ -34,3 +35,4 @@ clean:
 
 version:
 	@echo "Current version: $(VERSION)"
+	@echo "Current commit: $(COMMIT_HASH)"

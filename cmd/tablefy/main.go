@@ -12,6 +12,10 @@ import (
 // Default value for local builds without version information
 var Version = "dev"
 
+// CommitHash is set by ldflags during build
+// Default value for local builds without commit information
+var CommitHash = "unknown"
+
 func main() {
 	version := pflag.BoolP("version", "v", false, "Show version information")
 	autoExpand := pflag.BoolP("auto-expand", "a", false, "Auto-expand focused column if it contains truncated cells")
@@ -19,7 +23,7 @@ func main() {
 
 	// Handle version flag
 	if *version {
-		fmt.Printf("tablefy %s\n", Version)
+		fmt.Printf("tablefy %s (commit: %s)\n", Version, CommitHash)
 		os.Exit(0)
 	}
 
