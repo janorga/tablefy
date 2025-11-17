@@ -28,11 +28,12 @@ func RenderNormalView(m model.Model) string {
 	displayRows := applyScrollOffset(rowsToDisplay, m.ScrollOffset, visibleRows)
 
 	// Calculate optimal widths
-	widths := layout.CalculateColumnWidths(m.Rows, m.TermWidth)
+	// Base widths on the rows that will be displayed (filtered or unfiltered)
+	widths := layout.CalculateColumnWidths(rowsToDisplay, m.TermWidth)
 
 	// Apply auto-expand if enabled
 	if m.AutoExpand {
-		widths = layout.CalculateColumnWidthsWithAutoExpand(m.Rows, m.TermWidth, m.CurrentColumn, widths)
+		widths = layout.CalculateColumnWidthsWithAutoExpand(rowsToDisplay, m.TermWidth, m.CurrentColumn, widths)
 	}
 
 	// Truncate rows according to widths

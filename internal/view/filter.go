@@ -30,12 +30,13 @@ func RenderFilterView(m model.Model) string {
 	// Apply scroll offset to filtered rows
 	displayRows := applyScrollOffset(filteredRows, m.FilterScrollOffset, visibleRows)
 
-	// Calculate optimal widths based on ALL rows (not just filtered)
-	widths := layout.CalculateColumnWidths(m.Rows, m.TermWidth)
+	// Calculate optimal widths based on filtered rows
+	// This allows cells to fit better when you have a smaller subset of data
+	widths := layout.CalculateColumnWidths(filteredRows, m.TermWidth)
 
 	// Apply auto-expand if enabled (use current column, not filter column)
 	if m.AutoExpand {
-		widths = layout.CalculateColumnWidthsWithAutoExpand(m.Rows, m.TermWidth, m.CurrentColumn, widths)
+		widths = layout.CalculateColumnWidthsWithAutoExpand(filteredRows, m.TermWidth, m.CurrentColumn, widths)
 	}
 
 	// Truncate rows according to widths
