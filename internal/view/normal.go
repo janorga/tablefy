@@ -77,5 +77,11 @@ func buildNormalViewHelp(m model.Model, visibleRows int) string {
 		maxPos := totalDataRows - visibleRows + 1
 		scrollInfo = fmt.Sprintf(" | ↑↓/jk: Scroll (%d/%d)", currentPos, maxPos)
 	}
-	return fmt.Sprintf("\n← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom%s | q: Quit", selectedCount, scrollInfo)
+
+	autoExpandInfo := ""
+	if m.AutoExpand {
+		autoExpandInfo = " | [AUTO-EXPAND ON]"
+	}
+
+	return fmt.Sprintf("\n← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom%s%s | q: Quit", selectedCount, scrollInfo, autoExpandInfo)
 }
