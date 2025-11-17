@@ -64,13 +64,36 @@ func RenderNormalView(m model.Model) string {
 		t.Row(truncatedRows[i]...)
 	}
 
+	// Build filter indicator if active
+	output := t.Render()
+	if len(m.FilteredRowIndices) > 0 {
+		filterIndicator := buildFilterIndicator(m)
+		output = filterIndicator + "\n" + output
+	}
+
 	// Build help text with scroll indicator
 	helpText := buildNormalViewHelp(m, rowsToDisplay, visibleRows)
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Render(helpText)
 
-	return t.Render() + "\n" + help
+	return output + "\n" + help
+}
+
+// buildFilterIndicator builds the filter status indicator
+func buildFilterIndicator(m model.Model) string {
+	columnName := ""
+	if m.FilterColumnIndex < len(m.Rows[0]) {
+		columnName = m.Rows[0][m.FilterColumnIndex]
+	}
+
+	filterText := fmt.Sprintf("🔍 Filter active: [%s] = \"%s\" (%d results)", columnName, m.FilterInput, len(m.FilteredRowIndices))
+
+	return lipgloss.NewStyle().
+		Foreground(lipgloss.Color("11")). // Bright yellow
+		Bold(true).
+		Padding(0, 1).
+		Render(filterText)
 }
 
 // buildNormalViewHelp builds the help text for normal view
