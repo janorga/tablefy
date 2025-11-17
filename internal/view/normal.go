@@ -64,7 +64,7 @@ func RenderNormalView(m model.Model) string {
 		Foreground(lipgloss.Color("241")).
 		Render(helpText)
 
-	return t.Render() + help
+	return t.Render() + "\n" + help
 }
 
 // buildNormalViewHelp builds the help text for normal view
@@ -83,5 +83,5 @@ func buildNormalViewHelp(m model.Model, visibleRows int) string {
 		autoExpandInfo = " | [AUTO-EXPAND ON]"
 	}
 
-	return fmt.Sprintf("\n← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom%s%s | q: Quit", selectedCount, scrollInfo, autoExpandInfo)
+	return fmt.Sprintf("← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom%s%s | q: Quit", selectedCount, scrollInfo, autoExpandInfo)
 }
