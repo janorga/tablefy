@@ -51,6 +51,14 @@ Pedro  28  Valencia" | tablefy
 
 ## Command Line Flags
 
+### Version
+```bash
+tablefy --version    # Long form
+tablefy -v           # Short form
+```
+
+Displays the version of tablefy and exits.
+
 ### Auto-expand mode
 ```bash
 tablefy --auto-expand    # Long form
