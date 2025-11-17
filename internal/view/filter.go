@@ -33,6 +33,11 @@ func RenderFilterView(m model.Model) string {
 	// Calculate optimal widths based on ALL rows (not just filtered)
 	widths := layout.CalculateColumnWidths(m.Rows, m.TermWidth)
 
+	// Apply auto-expand if enabled (use current column, not filter column)
+	if m.AutoExpand {
+		widths = layout.CalculateColumnWidthsWithAutoExpand(m.Rows, m.TermWidth, m.CurrentColumn, widths)
+	}
+
 	// Truncate rows according to widths
 	truncatedRows := layout.TruncateRows(displayRows, widths)
 
