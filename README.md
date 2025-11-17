@@ -14,11 +14,6 @@ chmod +x tablefy
 sudo mv tablefy /usr/local/bin/
 ```
 
-Verify installation:
-```bash
-tablefy --version
-```
-
 ### Option 2: Build from Source
 
 Requirements:
