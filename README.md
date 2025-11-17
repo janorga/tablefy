@@ -22,11 +22,25 @@ Requirements:
 ```bash
 git clone https://github.com/janorga/tablefy.git
 cd tablefy
+
+# Using make (recommended)
+make build                 # Build with version from git tags
+make build-dev            # Quick build for development
+
+# Or using go directly
 go build -o bin/tablefy cmd/tablefy/main.go
 
 # Optional: Install globally
 sudo cp bin/tablefy /usr/local/bin/
 ```
+
+#### Make targets
+
+- `make build`: Builds the application with version information from git tags
+- `make build-dev`: Quick build for development (version: dev)
+- `make test`: Run all tests
+- `make version`: Show current version from git
+- `make clean`: Remove build artifacts
 
 ## Usage
 
