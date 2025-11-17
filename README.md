@@ -44,9 +44,9 @@ df -h | tablefy
 
 # Example with custom output
 echo "NAME  AGE  CITY
-John  25  Madrid
-Maria  30  Barcelona
-Pedro  28  Valencia" | tablefy
+John  25  London
+Alice 30  Paris
+Bob   28  Berlin" | tablefy
 ```
 
 ## Command Line Flags
@@ -116,18 +116,18 @@ Navigate with arrow keys to any column with truncated content and watch it expan
 Input:
 ```
 NAME    AGE    CITY
-John    25     Madrid
-Maria   30     Barcelona
+John    25     London
+Alice   30     Paris
 ```
 
 Output (with colors and borders):
 ```
-┌───────┬─────┬───────────┐
-│ NAME  │ AGE │ CITY      │
-├───────┼─────┼───────────┤
-│ John  │ 25  │ Madrid    │
-│ Maria │ 30  │ Barcelona │
-└───────┴─────┴───────────┘
+┌───────┬─────┬────────┐
+│ NAME  │ AGE │ CITY   │
+├───────┼─────┼────────┤
+│ John  │ 25  │ London │
+│ Alice │ 30  │ Paris  │
+└───────┴─────┴────────┘
 
 ← → / h l: Navigate | s: Toggle select (0 selected) | Enter: Zoom | q: Quit
 ```
