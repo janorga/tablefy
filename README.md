@@ -1,6 +1,16 @@
 # Tablefy
 
-Interactive table formatter for bash command output. Converts text with table format into beautiful tables using lipgloss and bubbletea.
+Interactive terminal table formatter that transforms CLI command output into beautifully formatted, fully interactive tables. 
+
+Tablefy takes the raw output from commands like `ps aux`, `docker ps`, `kubectl get pods`, or any space-delimited text and turns it into a rich, navigable interface with powerful features:
+
+- **Interactive Navigation**: Navigate columns with arrow keys, scroll through rows with PgUp/PgDn
+- **Fuzzy Filtering**: Instantly filter rows by searching column values with intelligent subsequence matching
+- **Column Zoom**: Select and focus on specific columns to reduce visual noise and see details
+- **Auto-Expand**: Automatically expand truncated columns to reveal full content when you navigate to them
+- **Beautiful Formatting**: Rich borders, colors, and optimal column width calculations using lipgloss and bubbletea
+
+Perfect for exploring large datasets from shell commands, system administration, container orchestration, and DevOps workflows.
 
 ## Installation
 
@@ -227,52 +237,79 @@ ps aux | tablefy
 
 ## Example Output
 
-Input:
-```
-NAME    AGE    CITY
-John    25     London
-Alice   30     Paris
-```
+### Real-World Example: Kubernetes Pods
 
-Output (with colors and borders):
-```
-┌───────┬─────┬────────┐
-│ NAME  │ AGE │ CITY   │
-├───────┼─────┼────────┤
-│ John  │ 25  │ London │
-│ Alice │ 30  │ Paris  │
-└───────┴─────┴────────┘
+Here's a practical example showing tablefy's power with real data:
 
-← → / h l: Navigate | s: Toggle select (0 selected) | Enter: Zoom | q: Quit
+**Input: `kubectl get pods -A`**
+```
+NAMESPACE     NAME                                    READY  STATUS     RESTARTS  AGE
+kube-system   coredns-5d78c0869f-7xk9q                1/1     Running   0         45d
+kube-system   etcd-master                             1/1     Running   1         45d
+kube-system   kube-apiserver-master                   1/1     Running   2         45d
+default       my-app-deployment-7c5f4b8c9d-k2x5n      1/1     Running   0         3d
+default       my-app-deployment-7c5f4b8c9d-m7q3p      1/1     Running   5         3d
+ingress-nginx nginx-ingress-controller-9f8c7b6d5e     1/1     Running   1         10d
+monitoring    prometheus-server-7b8c4d3e9f-a1s2k      0/1     Pending   0         2h
 ```
 
+**Output Table:**
+```
+┌───────────────┬────────────────────────────────────────┬───────┬─────────┬──────────┬──────┐
+│ NAMESPACE     │ NAME                                   │ READY │ STATUS  │ RESTARTS │ AGE  │
+├───────────────┼────────────────────────────────────────┼───────┼─────────┼──────────┼──────┤
+│ kube-system   │ coredns-5d78c0869f-7xk9q               │ 1/1   │ Running │ 0        │ 45d  │
+│ kube-system   │ etcd-master                            │ 1/1   │ Running │ 1        │ 45d  │
+│ kube-system   │ kube-apiserver-master                  │ 1/1   │ Running │ 2        │ 45d  │
+│ default       │ my-app-deployment-7c5f4b8c9d-k2x5n     │ 1/1   │ Running │ 0        │ 3d   │
+│ default       │ my-app-deployment-7c5f4b8c9d-m7q3p     │ 1/1   │ Running │ 5        │ 3d   │
+│ ingress-nginx │ nginx-ingress-controller-9f8c7b6d5e    │ 1/1   │ Running │ 1        │ 10d  │
+│ monitoring    │ prometheus-server-7b8c4d3e9f-a1s2k     │ 0/1   │ Pending │ 0        │ 2h   │
+└───────────────┴────────────────────────────────────────┴───────┴─────────┴──────────┴──────┘
 
-## Troubleshooting
+← → / h l: Navigate | s: Toggle select (0 selected) | Enter: Zoom | f: Filter | c: Clear | q: Quit
+```
 
-### Page Up/Page Down Keys Not Working
+**Interactive Features in Action:**
 
-If Page Up and Page Down keyboard shortcuts are not working in your terminal, this is likely due to terminal emulator differences in how they send these key codes.
-
-To diagnose the issue:
-
-1. **Build the key detection tool**:
-   ```bash
-   go build -o test-keys ./cmd/test-keys/main.go
+1. **Navigate & Explore:**
+   ```
+   Press → to move to NAME column
+   Press → again to see READY column
+   The table scrolls to keep your focused column visible
    ```
 
-2. **Run the diagnostic tool**:
-   ```bash
-   ./test-keys
+2. **Fuzzy Filter by Status:**
+   ```
+   Press → → → → to navigate to STATUS column
+   Press 'f' to start filtering
+   Type "Pend" to find pending pods
+   See live updates: "🔍 Filter [STATUS]: Pend (1 matches)"
+   Press Enter to apply
+   Now only the prometheus pod is shown (1/7 rows)
    ```
 
-3. **Press your Page Up and Page Down keys** and note the `String=` values displayed. For example:
-   - You should see something like `String="pgup"` for Page Up or `String="pgdn"` for Page Down
-   - Your terminal might send different values like `String="prior"` or `String="next"`
+3. **Select & Zoom Columns:**
+   ```
+   Press 's' to select NAMESPACE column (turns purple)
+   Press → → to navigate to NAME column
+   Press 's' to select NAME as well (2 columns selected)
+   Press Enter to zoom - see only NAMESPACE and NAME in focused view
+   Press 'q' to return to full table
+   ```
 
-4. **Report the values** you see, and we can add support for your terminal's key codes.
+4. **Fast Navigation:**
+   ```
+   Press PgDn to scroll down one page (4-5 rows at once)
+   Press PgUp to scroll back up quickly
+   Great for exploring large datasets
+   ```
 
-Currently supported key names:
-- **Page Up**: pgup, page up, pageup, prior
-- **Page Down**: pgdn, page down, pagedown, next
+5. **Auto-Expand for Details:**
+   ```
+   Run: kubectl get pods -A | tablefy --auto-expand
+   Press → to navigate to NAME column
+   The column auto-expands to show full pod names (no truncation)
+   You can now see complete information without "..." placeholders
+   ```
 
-If you see different values when pressing Page Up/Down, please report them so we can extend support.
