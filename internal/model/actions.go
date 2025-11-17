@@ -23,6 +23,27 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.handleFilterViewInput(msg)
 	}
 
+	// Handle special key types first (more efficient than string comparison)
+	switch msg.Type {
+	case tea.KeyPgUp:
+		// Page Up (Re Pág) - scroll up by page size
+		pageSize := m.GetPageSize()
+		m.ScrollOffset -= pageSize
+		if m.ScrollOffset < 0 {
+			m.ScrollOffset = 0
+		}
+		return m, nil
+	case tea.KeyType(-10): // Page Down (Av Pág)
+		// Page Down - scroll down by page size
+		pageSize := m.GetPageSize()
+		maxScroll := m.GetMaxScroll()
+		m.ScrollOffset += pageSize
+		if m.ScrollOffset > maxScroll {
+			m.ScrollOffset = maxScroll
+		}
+		return m, nil
+	}
+
 	switch msg.String() {
 	case "ctrl+c", "esc":
 		return m, tea.Quit
@@ -113,8 +134,57 @@ func (m Model) GetMaxScroll() int {
 	return maxScroll
 }
 
+// GetPageSize calculates how many rows fit in a page for pgup/pgdn
+func (m Model) GetPageSize() int {
+	// Account for header, borders, and help text (approximately 6 lines)
+	pageSize := m.TermHeight - 6
+	if pageSize < 1 {
+		pageSize = 1
+	}
+	return pageSize
+}
+
+// GetMaxFilterScroll calculates the maximum scroll offset for filter view
+func (m Model) GetMaxFilterScroll() int {
+	// Account for header, borders, filter input, and help text (approximately 7 lines)
+	visibleRows := m.TermHeight - 7
+	if visibleRows < 1 {
+		visibleRows = 1
+	}
+
+	// Filtered rows count (including header)
+	totalRows := len(m.FilteredRowIndices) + 1
+
+	maxScroll := totalRows - visibleRows
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	return maxScroll
+}
+
 // handleFilterViewInput handles keyboard input while in FilterView
 func (m Model) handleFilterViewInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Handle special key types first (more efficient than string comparison)
+	switch msg.Type {
+	case tea.KeyPgUp:
+		// Page Up (Re Pág) - scroll up by page size in filter view
+		pageSize := m.GetPageSize()
+		m.FilterScrollOffset -= pageSize
+		if m.FilterScrollOffset < 0 {
+			m.FilterScrollOffset = 0
+		}
+		return m, nil
+	case tea.KeyType(-10): // Page Down (Av Pág)
+		// Page Down - scroll down by page size in filter view
+		pageSize := m.GetPageSize()
+		maxFilterScroll := m.GetMaxFilterScroll()
+		m.FilterScrollOffset += pageSize
+		if m.FilterScrollOffset > maxFilterScroll {
+			m.FilterScrollOffset = maxFilterScroll
+		}
+		return m, nil
+	}
+
 	switch msg.String() {
 	case "esc":
 		// Cancel filter and return to normal view
@@ -132,6 +202,17 @@ func (m Model) handleFilterViewInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.FilterInput = m.FilterInput[:len(m.FilterInput)-1]
 			m.FilteredRowIndices = ApplyFuzzyFilter(m.Rows, m.FilterColumnIndex, m.FilterInput)
 			m.FilterScrollOffset = 0
+		}
+	case "up", "k":
+		// Scroll up in filter view
+		if m.FilterScrollOffset > 0 {
+			m.FilterScrollOffset--
+		}
+	case "down", "j":
+		// Scroll down in filter view
+		maxFilterScroll := m.GetMaxFilterScroll()
+		if m.FilterScrollOffset < maxFilterScroll {
+			m.FilterScrollOffset++
 		}
 	default:
 		// Add character to filter input

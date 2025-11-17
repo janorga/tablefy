@@ -105,7 +105,7 @@ func buildNormalViewHelp(m model.Model, rowsToDisplay [][]string, visibleRows in
 	if totalDataRows > visibleRows {
 		currentPos := m.ScrollOffset + 1
 		maxPos := totalDataRows - visibleRows + 1
-		scrollInfo = fmt.Sprintf(" | ↑↓/jk: Scroll (%d/%d)", currentPos, maxPos)
+		scrollInfo = fmt.Sprintf(" | ↑↓/jk/PgUp/PgDn: Scroll (%d/%d)", currentPos, maxPos)
 	}
 
 	autoExpandInfo := ""

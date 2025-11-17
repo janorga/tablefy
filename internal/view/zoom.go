@@ -107,7 +107,7 @@ func buildZoomViewHelp(m model.Model, zoomedRows [][]string, visibleRows int) st
 	if totalDataRows > visibleRows {
 		currentPos := m.ScrollOffset + 1
 		maxPos := totalDataRows - visibleRows + 1
-		scrollInfo = fmt.Sprintf(" | ↑↓/jk: Scroll (%d/%d)", currentPos, maxPos)
+		scrollInfo = fmt.Sprintf(" | ↑↓/jk/PgUp/PgDn: Scroll (%d/%d)", currentPos, maxPos)
 	}
 	return fmt.Sprintf("q: Exit zoom%s", scrollInfo)
 }

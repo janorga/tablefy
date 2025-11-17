@@ -75,7 +75,7 @@ func RenderFilterView(m model.Model) string {
 	filterDisplay := filterStyle.Render(filterInput)
 
 	// Help text
-	helpText := "Type to search | Esc: Cancel | Enter: Apply"
+	helpText := "Type to search | ↑↓/jk/PgUp/PgDn: Scroll | Esc: Cancel | Enter: Apply"
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Render(helpText)

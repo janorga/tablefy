@@ -92,7 +92,9 @@ Navigate with arrow keys to any column with truncated content and watch it expan
 
 ### Interactive Navigation
 - **← → / h l**: Navigate between columns
-- **↑ ↓ / j k**: Scroll through rows
+- **↑ ↓ / j k**: Scroll through rows (one row at a time)
+- **PgUp / Page Up**: Scroll up by page
+- **PgDn / Page Down**: Scroll down by page
 - **s**: Toggle selection of current column (can select multiple)
 - **Enter / Space**: Zoom into selected columns (creates new table with only those columns)
 - **f**: Fuzzy filter rows by current column values
@@ -244,3 +246,33 @@ Output (with colors and borders):
 ← → / h l: Navigate | s: Toggle select (0 selected) | Enter: Zoom | q: Quit
 ```
 
+
+## Troubleshooting
+
+### Page Up/Page Down Keys Not Working
+
+If Page Up and Page Down keyboard shortcuts are not working in your terminal, this is likely due to terminal emulator differences in how they send these key codes.
+
+To diagnose the issue:
+
+1. **Build the key detection tool**:
+   ```bash
+   go build -o test-keys ./cmd/test-keys/main.go
+   ```
+
+2. **Run the diagnostic tool**:
+   ```bash
+   ./test-keys
+   ```
+
+3. **Press your Page Up and Page Down keys** and note the `String=` values displayed. For example:
+   - You should see something like `String="pgup"` for Page Up or `String="pgdn"` for Page Down
+   - Your terminal might send different values like `String="prior"` or `String="next"`
+
+4. **Report the values** you see, and we can add support for your terminal's key codes.
+
+Currently supported key names:
+- **Page Up**: pgup, page up, pageup, prior
+- **Page Down**: pgdn, page down, pagedown, next
+
+If you see different values when pressing Page Up/Down, please report them so we can extend support.
