@@ -45,6 +45,13 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.FilteredRowIndices = ApplyFuzzyFilter(m.Rows, m.FilterColumnIndex, "")
 			return m, nil
 		}
+	case "c", "C":
+		// Clear filter
+		if m.ViewMode == NormalView && len(m.FilteredRowIndices) > 0 {
+			m.ClearFilter()
+			m.ScrollOffset = 0
+			return m, nil
+		}
 	case "left", "h":
 		if m.ViewMode == NormalView && m.CurrentColumn > 0 {
 			m.CurrentColumn--
@@ -91,8 +98,13 @@ func (m Model) GetMaxScroll() int {
 		visibleRows = 1
 	}
 
-	// Number of data rows (excluding header)
-	dataRows := len(m.Rows) - 1
+	// Determine total data rows based on filter status
+	var dataRows int
+	if len(m.FilteredRowIndices) > 0 {
+		dataRows = len(m.FilteredRowIndices)
+	} else {
+		dataRows = len(m.Rows) - 1 // All rows except header
+	}
 
 	maxScroll := dataRows - visibleRows
 	if maxScroll < 0 {

@@ -15,11 +15,17 @@ func RenderNormalView(m model.Model) string {
 		return "No data to display"
 	}
 
+	// Determine which rows to display based on active filter
+	rowsToDisplay := m.Rows
+	if len(m.FilteredRowIndices) > 0 {
+		rowsToDisplay = GetFilteredRows(m.Rows, m.FilteredRowIndices)
+	}
+
 	// Calculate visible rows based on terminal height
 	visibleRows := layout.GetVisibleRows(m.TermHeight)
 
 	// Apply scroll offset to get visible subset of rows
-	displayRows := applyScrollOffset(m.Rows, m.ScrollOffset, visibleRows)
+	displayRows := applyScrollOffset(rowsToDisplay, m.ScrollOffset, visibleRows)
 
 	// Calculate optimal widths
 	widths := layout.CalculateColumnWidths(m.Rows, m.TermWidth)
@@ -59,7 +65,7 @@ func RenderNormalView(m model.Model) string {
 	}
 
 	// Build help text with scroll indicator
-	helpText := buildNormalViewHelp(m, visibleRows)
+	helpText := buildNormalViewHelp(m, rowsToDisplay, visibleRows)
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Render(helpText)
@@ -68,9 +74,9 @@ func RenderNormalView(m model.Model) string {
 }
 
 // buildNormalViewHelp builds the help text for normal view
-func buildNormalViewHelp(m model.Model, visibleRows int) string {
+func buildNormalViewHelp(m model.Model, rowsToDisplay [][]string, visibleRows int) string {
 	selectedCount := len(m.SelectedColumns)
-	totalDataRows := len(m.Rows) - 1
+	totalDataRows := len(rowsToDisplay) - 1 // Exclude header
 	scrollInfo := ""
 	if totalDataRows > visibleRows {
 		currentPos := m.ScrollOffset + 1
@@ -83,5 +89,10 @@ func buildNormalViewHelp(m model.Model, visibleRows int) string {
 		autoExpandInfo = " | [AUTO-EXPAND ON]"
 	}
 
-	return fmt.Sprintf("← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom%s%s | q: Quit", selectedCount, scrollInfo, autoExpandInfo)
+	filterInfo := ""
+	if len(m.FilteredRowIndices) > 0 {
+		filterInfo = fmt.Sprintf(" | [FILTERED: %d/%d rows]", totalDataRows, len(m.Rows)-1)
+	}
+
+	return fmt.Sprintf("← → / h l: Navigate | s: Toggle select (%d selected) | Enter: Zoom | f: Filter%s%s%s | q: Quit", selectedCount, scrollInfo, autoExpandInfo, filterInfo)
 }
