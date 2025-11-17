@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+// ColumnPosition represents a column with its starting position and name
+type ColumnPosition struct {
+	Start int    // Starting position of the column in the line
+	Name  string // Column name from the header
+}
+
 // splitByMultipleSpaces splits a line by tabs first, then falls back to 2+ consecutive spaces
 func splitByMultipleSpaces(line string) []string {
 	var parts []string
@@ -28,8 +34,79 @@ func splitByMultipleSpaces(line string) []string {
 	return result
 }
 
+// extractColumnPositions extracts the start position of each column from the header line
+// by finding where 2+ consecutive spaces occur and marking column starts
+func extractColumnPositions(headerLine string) []ColumnPosition {
+	// Get column names using the proven split logic
+	columnNames := splitByMultipleSpaces(headerLine)
+	if len(columnNames) == 0 {
+		return nil
+	}
+
+	// Find where 2+ spaces occur in the header to identify column starts
+	re := regexp.MustCompile(`\s{2,}`)
+	matches := re.FindAllStringIndex(headerLine, -1)
+
+	// Column positions: start at 0, and right after each multi-space separator
+	var columnStarts []int
+	columnStarts = append(columnStarts, 0)
+	for _, match := range matches {
+		columnStarts = append(columnStarts, match[1])
+	}
+
+	// Create ColumnPosition objects with the column starts and names
+	var positions []ColumnPosition
+	for i, start := range columnStarts {
+		if i < len(columnNames) {
+			positions = append(positions, ColumnPosition{
+				Start: start,
+				Name:  columnNames[i],
+			})
+		}
+	}
+
+	return positions
+}
+
+// extractValuesByPosition extracts column values from a data line using column positions
+// Each value starts at the column's start position and extends until the next column starts
+func extractValuesByPosition(line string, positions []ColumnPosition) []string {
+	var result []string
+
+	for i, pos := range positions {
+		var value string
+		var endPos int
+
+		// Determine where this column ends (start of next column or end of line)
+		if i+1 < len(positions) {
+			endPos = positions[i+1].Start
+		} else {
+			endPos = len(line)
+		}
+
+		// Make sure we don't go past the line length
+		start := pos.Start
+		if start > len(line) {
+			start = len(line)
+		}
+		if endPos > len(line) {
+			endPos = len(line)
+		}
+
+		// Extract substring and trim whitespace
+		if start < len(line) && endPos > start {
+			value = strings.TrimSpace(line[start:endPos])
+		}
+
+		result = append(result, value)
+	}
+
+	return result
+}
+
 // ParseTable parses the input and converts it to rows and columns
-// Splits columns by 2 or more consecutive spaces to preserve values with single spaces
+// It uses column positions from the header to align data rows correctly when space-separated
+// For tab-separated data, it uses simple tab splitting
 func ParseTable(input string) [][]string {
 	lines := strings.Split(input, "\n")
 	var validLines []string
@@ -45,37 +122,44 @@ func ParseTable(input string) [][]string {
 		return nil
 	}
 
-	// Get the header and count how many columns it has
+	// Check if the data is tab-separated (like helm output)
 	header := validLines[0]
-	headerFields := splitByMultipleSpaces(header)
-	numHeaderCols := len(headerFields)
+	isTabSeparated := strings.Contains(header, "\t")
 
-	if numHeaderCols == 0 {
+	if isTabSeparated {
+		// For tab-separated data, use simple splitting
+		var rows [][]string
+		for _, line := range validLines {
+			fields := strings.Split(line, "\t")
+			rows = append(rows, fields)
+		}
+		return rows
+	}
+
+	// For space-separated data, use position-based alignment
+	columnPositions := extractColumnPositions(header)
+
+	if len(columnPositions) == 0 {
 		return nil
 	}
 
+	// Extract header row
 	var rows [][]string
-	rows = append(rows, headerFields)
+	headerRow := make([]string, len(columnPositions))
+	for i, pos := range columnPositions {
+		headerRow[i] = pos.Name
+	}
+	rows = append(rows, headerRow)
 
-	// Process each data line
+	// Process each data line using column positions
 	for i := 1; i < len(validLines); i++ {
-		fields := splitByMultipleSpaces(validLines[i])
+		row := extractValuesByPosition(validLines[i], columnPositions)
 
-		if len(fields) == 0 {
-			continue
-		}
-
-		var row []string
-
-		if len(fields) >= numHeaderCols {
-			// If it has at least as many fields as columns in the header,
-			// take the first numHeaderCols-1 and join the rest in the last one
-			row = append(row, fields[:numHeaderCols-1]...)
-			row = append(row, strings.Join(fields[numHeaderCols-1:], " "))
-		} else {
-			// If it has fewer fields, copy what's there and fill with empty strings
-			row = make([]string, numHeaderCols)
-			copy(row, fields)
+		// Ensure row has the correct number of columns (fill missing ones with empty strings)
+		if len(row) < len(columnPositions) {
+			for len(row) < len(columnPositions) {
+				row = append(row, "")
+			}
 		}
 
 		rows = append(rows, row)
