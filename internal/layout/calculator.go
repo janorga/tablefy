@@ -142,7 +142,7 @@ func CalculateColumnWidthsWithAutoExpand(rows [][]string, termWidth int, focused
 
 	totalAvailableWidth := termWidth - overhead
 
-	// Check if we have enough space to expand
+	// Check if we have enough space to expand without shrinking
 	if totalCurrentWidth+extraNeeded <= totalAvailableWidth {
 		// We have space, just expand the focused column
 		expandedWidths := make([]int, len(currentWidths))
@@ -151,72 +151,44 @@ func CalculateColumnWidthsWithAutoExpand(rows [][]string, termWidth int, focused
 		return expandedWidths
 	}
 
-	// We don't have enough space, need to shrink other columns
+	// We need to shrink other columns. Do it proportionally.
 	expandedWidths := make([]int, len(currentWidths))
 	copy(expandedWidths, currentWidths)
 
-	// Try to get space by shrinking non-focused columns
-	totalToReclaim := extraNeeded
+	// Calculate how much we need to shrink from other columns
+	totalToShrink := totalCurrentWidth + extraNeeded - totalAvailableWidth
 
-	// Prioritize shrinking columns that are not focused
-	// Start from the last column (which usually has the most space)
-	for i := len(expandedWidths) - 1; i >= 0 && totalToReclaim > 0; i-- {
-		if i == focusedColumn {
-			continue // Skip the focused column
+	if totalToShrink <= 0 {
+		// Actually we have enough space (shouldn't get here, but just in case)
+		expandedWidths[focusedColumn] = fullWidth
+		return expandedWidths
+	}
+
+	// Shrink all non-focused columns proportionally
+	totalNonFocusedWidth := 0
+	for i, w := range expandedWidths {
+		if i != focusedColumn {
+			totalNonFocusedWidth += w
 		}
+	}
 
-		// Get the full width needed for this column
-		requiredWidth := GetRequiredWidthForColumn(rows, i)
+	if totalNonFocusedWidth > 0 {
+		for i := range expandedWidths {
+			if i != focusedColumn {
+				proportion := float64(expandedWidths[i]) / float64(totalNonFocusedWidth)
+				shrinkAmount := int(proportion * float64(totalToShrink))
+				expandedWidths[i] -= shrinkAmount
 
-		// We can shrink it to show truncated version (at least 8 chars + "...")
-		minShrinkWidth := 8
-		if requiredWidth < minShrinkWidth {
-			minShrinkWidth = requiredWidth
-		}
-
-		canShrink := expandedWidths[i] - minShrinkWidth
-		if canShrink > 0 {
-			shrinkAmount := canShrink
-			if shrinkAmount > totalToReclaim {
-				shrinkAmount = totalToReclaim
+				// Ensure minimum width for readability (at least 5 chars)
+				if expandedWidths[i] < 5 {
+					expandedWidths[i] = 5
+				}
 			}
-			expandedWidths[i] -= shrinkAmount
-			totalToReclaim -= shrinkAmount
 		}
 	}
 
-	// If we still need more space, shrink from earlier columns too
-	for i := 0; i < len(expandedWidths) && totalToReclaim > 0; i++ {
-		if i == focusedColumn {
-			continue
-		}
-
-		requiredWidth := GetRequiredWidthForColumn(rows, i)
-		minShrinkWidth := 8
-		if requiredWidth < minShrinkWidth {
-			minShrinkWidth = requiredWidth
-		}
-
-		canShrink := expandedWidths[i] - minShrinkWidth
-		if canShrink > 0 {
-			shrinkAmount := canShrink
-			if shrinkAmount > totalToReclaim {
-				shrinkAmount = totalToReclaim
-			}
-			expandedWidths[i] -= shrinkAmount
-			totalToReclaim -= shrinkAmount
-		}
-	}
-
-	// If we got all the space we need, expand the focused column
-	if totalToReclaim <= 0 {
-		spaceReclaimed := extraNeeded - totalToReclaim
-		expandedWidths[focusedColumn] += spaceReclaimed
-	} else {
-		// Even after shrinking, we might not have enough
-		// Expand what we can
-		expandedWidths[focusedColumn] += (extraNeeded - totalToReclaim)
-	}
+	// Now expand the focused column with available space
+	expandedWidths[focusedColumn] = fullWidth
 
 	return expandedWidths
 }
