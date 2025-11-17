@@ -95,31 +95,53 @@ Navigate with arrow keys to any column with truncated content and watch it expan
 - **↑ ↓ / j k**: Scroll through rows
 - **s**: Toggle selection of current column (can select multiple)
 - **Enter / Space**: Zoom into selected columns (creates new table with only those columns)
-- **f**: Fuzzy filter rows by current column values (see below)
+- **f**: Fuzzy filter rows by current column values
+- **c**: Clear active filter and show all rows
 - **q**: Exit zoom mode or quit the application
 - **Esc / Ctrl+C**: Quit the application
 
 ### Fuzzy Filter
-Press **f** to enter filter mode for the currently focused column. The fuzzy filter allows you to quickly narrow down rows by searching for values in that column using fuzzy matching.
+
+Press **f** to enter filter mode for the currently focused column. The fuzzy filter allows you to quickly narrow down rows by searching for values in that column using intelligent subsequence matching.
 
 **How it works:**
 - Navigate to a column you want to filter by
 - Press **f** to activate the fuzzy finder
 - Type a search query (e.g., "run" will match "running", "runner", "runtime")
-- See live previews of matching rows with a count
-- Press **Enter** to apply the filter
+- See live previews of matching rows with a count (e.g., "Filter [STATUS]: run (3 matches)")
+- Press **Enter** to apply the filter and work with filtered data
 - Press **Esc** to cancel without applying
 
-**Example:**
+**After applying filter:**
+- You can **navigate** between columns normally (← →, h/l)
+- You can **scroll** through filtered rows (↑ ↓, j/k)
+- You can **select columns** and **zoom** into them (s, Enter)
+- **Auto-expand** feature works with filtered data
+- Press **c** to clear the filter and return to all rows
+
+**How fuzzy matching works:**
+The filter uses subsequence matching where query characters must appear in order (case-insensitive):
+- Query "run" matches: running, runner, runtime (all have r, u, n in order)
+- Query "rung" matches: running (has r, u, n, g in order)
+- Query "runn" matches: running, runner (both have two n's)
+- More specific queries return fewer results - exactly what you'd expect!
+
+**Example workflow:**
 ```bash
 ps aux | tablefy
 # Navigate to the STAT column (use ← →)
 # Press 'f' to filter
-# Type "S" to show only sleeping processes
-# Press Enter to apply
+# Type "S" to show only sleeping processes (S, Ss, S+, etc.)
+# Press Enter to apply filter
+# Now navigate, scroll, and zoom through only the matching rows
+# Press 'c' to clear filter and go back to all processes
 ```
 
-The fuzzy filter uses closestmatch algorithm for intelligent matching, so you don't need exact strings - typos and partial matches work great!
+**Use cases:**
+- Filter docker containers by STATUS to see only running/stopped containers
+- Filter Kubernetes pods to show only those in Error or Pending state
+- Filter process list to show only Java processes, Bash shells, or specific users
+- Quickly reduce large datasets to find what you're looking for
 
 ### Automatic Formatting
 - Reads input from stdin
