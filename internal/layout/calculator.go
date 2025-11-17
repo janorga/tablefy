@@ -64,9 +64,35 @@ func CalculateColumnWidths(rows [][]string, termWidth int) []int {
 		totalWidth += w
 	}
 
-	// If everything fits, return original widths
+	// If everything fits without truncation, use it but fill remaining space
 	if totalWidth <= availableWidth {
-		return widths
+		// Use the natural widths, but distribute any leftover space proportionally
+		adjustedWidths := make([]int, numCols)
+		copy(adjustedWidths, widths)
+
+		leftoverSpace := availableWidth - totalWidth
+		if leftoverSpace > 0 {
+			// Distribute leftover space proportionally based on natural widths
+			for i := range adjustedWidths {
+				if totalWidth > 0 {
+					proportion := float64(widths[i]) / float64(totalWidth)
+					extraSpace := int(proportion * float64(leftoverSpace))
+					adjustedWidths[i] += extraSpace
+				}
+			}
+
+			// Handle any rounding remainder by giving it to the last column
+			actualTotal := 0
+			for _, w := range adjustedWidths {
+				actualTotal += w
+			}
+			remainder := availableWidth - actualTotal
+			if remainder > 0 {
+				adjustedWidths[numCols-1] += remainder
+			}
+		}
+
+		return adjustedWidths
 	}
 
 	// If it doesn't fit, adjust with priority to the last column

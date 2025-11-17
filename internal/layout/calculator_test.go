@@ -95,3 +95,61 @@ func TestCalculateFullColumnWidths(t *testing.T) {
 		}
 	}
 }
+
+// TestCalculateColumnWidths_FillsAvailableSpace verifies that CalculateColumnWidths
+// distributes available space proportionally even when content is shorter than terminal width
+func TestCalculateColumnWidths_FillsAvailableSpace(t *testing.T) {
+	rows := [][]string{
+		{"NAME", "STATUS", "AGE"},
+		{"app1", "running", "1d"},
+		{"app2", "deployed", "5d"},
+	}
+
+	termWidth := 80
+	numCols := 3
+	overhead := numCols*3 + 1 // borders and padding
+	availableWidth := termWidth - overhead
+
+	result := CalculateColumnWidths(rows, termWidth)
+
+	// Calculate total width
+	totalWidth := 0
+	for _, w := range result {
+		totalWidth += w
+	}
+
+	// Should use all available space (or very close, accounting for rounding)
+	if totalWidth != availableWidth {
+		t.Errorf("Total width should be %d, got %d (difference: %d)", availableWidth, totalWidth, availableWidth-totalWidth)
+	}
+}
+
+// TestCalculateColumnWidths_ProportionalDistribution verifies that space is distributed
+// proportionally based on natural column widths
+func TestCalculateColumnWidths_ProportionalDistribution(t *testing.T) {
+	rows := [][]string{
+		{"SHORT", "MEDIUM", "VERYLONGNAME"},
+		{"a", "bb", "cccccccccccc"},
+	}
+
+	termWidth := 100
+	numCols := 3
+	overhead := numCols*3 + 1
+	availableWidth := termWidth - overhead
+
+	result := CalculateColumnWidths(rows, termWidth)
+
+	// The longest column should get more space
+	if result[2] <= result[0] || result[2] <= result[1] {
+		t.Errorf("Longest column should get more space: %v", result)
+	}
+
+	// Total should fill available space
+	totalWidth := 0
+	for _, w := range result {
+		totalWidth += w
+	}
+	if totalWidth != availableWidth {
+		t.Errorf("Should fill available space: %d != %d", totalWidth, availableWidth)
+	}
+}
