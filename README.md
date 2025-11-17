@@ -116,7 +116,9 @@ Press **f** to enter filter mode for the currently focused column. The fuzzy fil
 - You can **navigate** between columns normally (← →, h/l)
 - You can **scroll** through filtered rows (↑ ↓, j/k)
 - You can **select columns** and **zoom** into them (s, Enter)
-- **Auto-expand** feature works with filtered data
+- **Auto-expand** feature works with filtered data - expansions are maintained
+- Column widths are automatically recalculated based on filtered data for optimal display
+- A filter indicator badge appears above the table showing: `🔍 Filter active: [COLUMN] = "QUERY" (X results)`
 - Press **c** to clear the filter and return to all rows
 
 **How fuzzy matching works:**
@@ -125,6 +127,14 @@ The filter uses subsequence matching where query characters must appear in order
 - Query "rung" matches: running (has r, u, n, g in order)
 - Query "runn" matches: running, runner (both have two n's)
 - More specific queries return fewer results - exactly what you'd expect!
+- Characters can be non-consecutive but must maintain order: "jv" matches "javascript" but not "java"
+
+**Column width optimization:**
+When you filter data, column widths are recalculated based on the filtered subset rather than the entire dataset. This means:
+- Narrower columns with less data will use less space
+- Long text that couldn't fit before might now display without truncation
+- The terminal space is used more efficiently with your filtered results
+- Widths adjust dynamically as you refine your filter query
 
 **Example workflow:**
 ```bash
@@ -132,8 +142,10 @@ ps aux | tablefy
 # Navigate to the STAT column (use ← →)
 # Press 'f' to filter
 # Type "S" to show only sleeping processes (S, Ss, S+, etc.)
+# Notice the filter indicator and see matches update in real-time
 # Press Enter to apply filter
 # Now navigate, scroll, and zoom through only the matching rows
+# Column widths are now optimized for the filtered data
 # Press 'c' to clear filter and go back to all processes
 ```
 
@@ -142,6 +154,7 @@ ps aux | tablefy
 - Filter Kubernetes pods to show only those in Error or Pending state
 - Filter process list to show only Java processes, Bash shells, or specific users
 - Quickly reduce large datasets to find what you're looking for
+- Combine with auto-expand to inspect detailed fields in filtered results
 
 ### Automatic Formatting
 - Reads input from stdin
@@ -169,6 +182,46 @@ ps aux | tablefy
 5. Press **s** to select it too
 6. Press **Enter** to zoom - now you see only USER and COMMAND columns in a new table
 7. Press **q** to return to the full table view
+
+## Advanced Features
+
+### Combining Auto-expand with Fuzzy Filter
+
+When both **auto-expand** and **fuzzy filter** are used together, they work seamlessly:
+
+**Workflow:**
+```bash
+ps aux | tablefy --auto-expand
+# Navigate to COMMAND column (which may have truncated content)
+# The column expands to show full command
+# Press 'f' to filter by command
+# Type a search term (e.g., "node" or "python")
+# The expansion is MAINTAINED while you filter
+# Filtered results are shown with optimized column widths
+# You can still navigate and zoom on filtered data
+# Column expansion persists until you navigate away
+```
+
+**Key behaviors:**
+- When you press `f` to enter filter mode, **auto-expand state is preserved**
+- While typing in the filter, column widths dynamically adjust based on the filtered subset
+- If your filter significantly reduces the dataset, columns may shrink (no longer need the full expansion width)
+- When you apply the filter and return to normal view, the expanded column is re-expanded based on the filtered data
+- Pressing `c` to clear the filter re-expands columns for the full dataset
+
+### Zoom with Filtered Data
+
+The zoom feature works perfectly with filtered data:
+
+```bash
+ps aux | tablefy
+# Filter by STATUS to show only sleeping processes
+# Select USER and COMMAND columns with 's'
+# Press Enter to zoom - zoomed view shows only filtered rows
+# Zoom view also shows the filter indicator
+# Press 'q' to return to filtered view (filter still active)
+```
+
 
 ## Example Output
 
