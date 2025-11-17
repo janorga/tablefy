@@ -1,10 +1,11 @@
 package model
 
 import (
-	"github.com/schollz/closestmatch"
+	"strings"
 )
 
 // ApplyFuzzyFilter applies fuzzy matching to filter rows based on a column and query
+// Returns row indices where the column value fuzzy-matches the query
 func ApplyFuzzyFilter(rows [][]string, columnIndex int, query string) []int {
 	if len(rows) == 0 || columnIndex < 0 || columnIndex >= len(rows[0]) {
 		return []int{}
@@ -19,44 +20,62 @@ func ApplyFuzzyFilter(rows [][]string, columnIndex int, query string) []int {
 		return indices
 	}
 
-	// Extract column values (skip header row 0)
-	var columnValues []string
-	for i := 1; i < len(rows); i++ {
-		if columnIndex < len(rows[i]) {
-			columnValues = append(columnValues, rows[i][columnIndex])
-		}
-	}
+	// Normalize query for matching (lowercase, trim)
+	queryLower := strings.ToLower(strings.TrimSpace(query))
 
-	if len(columnValues) == 0 {
-		return []int{}
-	}
-
-	// Create closest match finder
-	cm := closestmatch.New(columnValues, []int{2})
-
-	// Find matches for the query
-	matches := cm.ClosestN(query, len(columnValues))
-
-	// Convert matched values back to row indices
+	// Extract column values and find matches (skip header row 0)
 	var filteredIndices []int
-	valueToRowIndex := make(map[string][]int)
-
-	// Build map from value to row indices
 	for i := 1; i < len(rows); i++ {
 		if columnIndex < len(rows[i]) {
 			value := rows[i][columnIndex]
-			valueToRowIndex[value] = append(valueToRowIndex[value], i)
-		}
-	}
+			valueLower := strings.ToLower(value)
 
-	// Collect indices from matched values
-	for _, match := range matches {
-		if indices, exists := valueToRowIndex[match]; exists {
-			filteredIndices = append(filteredIndices, indices...)
+			// Use fuzzy matching: check if query characters appear in order in value
+			if fuzzyMatch(queryLower, valueLower) {
+				filteredIndices = append(filteredIndices, i)
+			}
 		}
 	}
 
 	return filteredIndices
+}
+
+// fuzzyMatch checks if all characters in query appear in value in the same order
+// This implements subsequence matching (e.g., "run" matches "rUnning" when case-insensitive)
+func fuzzyMatch(query, value string) bool {
+	queryIdx := 0
+	for _, char := range value {
+		if queryIdx < len(query) && char == rune(query[queryIdx]) {
+			queryIdx++
+		}
+	}
+	return queryIdx == len(query)
+}
+
+// fuzzyMatchSmart checks fuzzy match with scoring for better relevance
+// Prefers matches where characters are closer together
+func fuzzyMatchSmart(query, value string) (bool, float64) {
+	queryIdx := 0
+	valueIdx := 0
+	charDistance := 0
+
+	for valueIdx < len(value) && queryIdx < len(query) {
+		if value[valueIdx] == query[queryIdx] {
+			queryIdx++
+		}
+		charDistance++
+		valueIdx++
+	}
+
+	// Only a match if all query characters were found
+	if queryIdx != len(query) {
+		return false, 0
+	}
+
+	// Score based on how many characters we had to skip
+	// Lower score (closer match) is better
+	score := float64(charDistance) / float64(len(query))
+	return true, score
 }
 
 // GetFilteredRows extracts rows at specified indices
