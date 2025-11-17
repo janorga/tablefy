@@ -1,8 +1,35 @@
 package parser
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
+
+// splitByMultipleSpaces splits a line by tabs first, then falls back to 2+ consecutive spaces
+func splitByMultipleSpaces(line string) []string {
+	var parts []string
+
+	// First try to split by tabs (most common in command output like helm, kubectl)
+	if strings.Contains(line, "\t") {
+		parts = strings.Split(line, "\t")
+	} else {
+		// Fallback: split by 2 or more consecutive spaces
+		re := regexp.MustCompile(`\s{2,}`)
+		parts = re.Split(line, -1)
+	}
+
+	var result []string
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
+}
 
 // ParseTable parses the input and converts it to rows and columns
+// Splits columns by 2 or more consecutive spaces to preserve values with single spaces
 func ParseTable(input string) [][]string {
 	lines := strings.Split(input, "\n")
 	var validLines []string
@@ -20,7 +47,7 @@ func ParseTable(input string) [][]string {
 
 	// Get the header and count how many columns it has
 	header := validLines[0]
-	headerFields := strings.Fields(header)
+	headerFields := splitByMultipleSpaces(header)
 	numHeaderCols := len(headerFields)
 
 	if numHeaderCols == 0 {
@@ -32,7 +59,7 @@ func ParseTable(input string) [][]string {
 
 	// Process each data line
 	for i := 1; i < len(validLines); i++ {
-		fields := strings.Fields(validLines[i])
+		fields := splitByMultipleSpaces(validLines[i])
 
 		if len(fields) == 0 {
 			continue
