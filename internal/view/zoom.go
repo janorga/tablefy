@@ -16,11 +16,17 @@ func RenderZoomView(m model.Model) string {
 		return "No data to display"
 	}
 
+	// Determine which rows to use based on active filter
+	rowsToUse := m.Rows
+	if len(m.FilteredRowIndices) > 0 {
+		rowsToUse = GetFilteredRows(m.Rows, m.FilteredRowIndices)
+	}
+
 	// Get sorted list of selected column indices
 	selectedIndices := sortSelectedColumns(m.SelectedColumns)
 
 	// Extract selected columns
-	zoomedRows := extractSelectedColumns(m.Rows, selectedIndices)
+	zoomedRows := extractSelectedColumns(rowsToUse, selectedIndices)
 
 	// Calculate visible rows based on terminal height (account for title and help)
 	visibleRows := layout.GetVisibleRowsForZoom(m.TermHeight)
@@ -63,13 +69,20 @@ func RenderZoomView(m model.Model) string {
 	// Build title
 	title := buildZoomTitle(m, selectedIndices)
 
+	// Build filter indicator if active
+	output := t.Render()
+	if len(m.FilteredRowIndices) > 0 {
+		filterIndicator := buildFilterIndicator(m)
+		output = filterIndicator + "\n" + output
+	}
+
 	// Build help text with scroll indicator
 	helpText := buildZoomViewHelp(m, zoomedRows, visibleRows)
 	help := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("241")).
 		Render(helpText)
 
-	return fmt.Sprintf("%s\n\n%s\n%s", title, t.Render(), help)
+	return fmt.Sprintf("%s\n\n%s\n%s", title, output, help)
 }
 
 // buildZoomTitle builds the title for zoom view
