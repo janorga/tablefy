@@ -18,6 +18,7 @@ type Model struct {
 	FilteredRowIndices []int
 	FilterColumnIndex  int
 	FilterScrollOffset int
+	ExportData         string // Data to export when quitting with 'o'
 	renderer           func(Model) string
 }
 

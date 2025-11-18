@@ -109,6 +109,7 @@ Navigate with arrow keys to any column with truncated content and watch it expan
 - **Enter / Space**: Zoom into selected columns (creates new table with only those columns)
 - **f**: Fuzzy filter rows by current column values
 - **c**: Clear active filter and show all rows
+- **o**: Export and quit (prints the visible table with aligned columns, no borders)
 - **q**: Exit zoom mode or quit the application
 - **Esc / Ctrl+C**: Quit the application
 
@@ -194,6 +195,33 @@ ps aux | tablefy
 5. Press **s** to select it too
 6. Press **Enter** to zoom - now you see only USER and COMMAND columns in a new table
 7. Press **q** to return to the full table view
+
+### Export Data
+
+Press **o** to export the currently visible table and quit the application. The exported table will be printed to stdout with:
+- Aligned columns with proper spacing
+- No borders or styling (plain text format)
+- No header row (only data rows)
+- Support for all view modes (normal, filtered, zoomed)
+
+**Use cases:**
+- Export filtered results for further processing: `ps aux | tablefy | grep something`
+- Save zoomed view output to a file: `docker ps | tablefy > containers.txt`
+- Pipe filtered data to another command: `kubectl get pods | tablefy | xargs kubectl describe`
+- Copy cleaned data for documentation or reporting
+
+**Example workflow:**
+```bash
+# 1. Filter data interactively
+ps aux | tablefy
+# 2. Navigate and filter to show only interesting processes
+# 3. Press 'o' to export and quit
+# 4. The filtered, formatted table appears on stdout
+
+# Or combine in a pipeline:
+ps aux | tablefy > process_output.txt
+# Then use the formatted table for further analysis
+```
 
 ## Advanced Features
 

@@ -73,6 +73,10 @@ func (m Model) handleKeyPress(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.ScrollOffset = 0
 			return m, nil
 		}
+	case "o", "O":
+		// Export visible table and quit
+		m.ExportData = m.GetExportData()
+		return m, tea.Quit
 	case "left", "h":
 		if m.ViewMode == NormalView && m.CurrentColumn > 0 {
 			m.CurrentColumn--
@@ -214,6 +218,10 @@ func (m Model) handleFilterViewInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.FilterScrollOffset < maxFilterScroll {
 			m.FilterScrollOffset++
 		}
+	case "o", "O":
+		// Export filtered table and quit
+		m.ExportData = m.GetExportData()
+		return m, tea.Quit
 	default:
 		// Add character to filter input
 		if len(msg.String()) == 1 {

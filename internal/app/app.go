@@ -55,8 +55,14 @@ func Run(config Config) error {
 
 	// Start bubbletea program
 	p := tea.NewProgram(m, tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
+	final, err := p.Run()
+	if err != nil {
 		return fmt.Errorf("error running program: %w", err)
+	}
+
+	// Print exported data if any (when user pressed 'o')
+	if finalModel, ok := final.(model.Model); ok && finalModel.ExportData != "" {
+		fmt.Println(finalModel.ExportData)
 	}
 
 	return nil
