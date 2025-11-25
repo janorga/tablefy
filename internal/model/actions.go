@@ -218,10 +218,6 @@ func (m Model) handleFilterViewInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if m.FilterScrollOffset < maxFilterScroll {
 			m.FilterScrollOffset++
 		}
-	case "o", "O":
-		// Export filtered table and quit
-		m.ExportData = m.GetExportData()
-		return m, tea.Quit
 	default:
 		// Add character to filter input
 		if len(msg.String()) == 1 {
