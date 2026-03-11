@@ -20,7 +20,7 @@ Perfect for exploring large datasets from shell commands, system administration,
 brew install janorga/tap/tablefy
 ```
 
-### Option 2: Download from GitHub Releases (Recommended)
+### Option 2: Download from GitHub Releases
 
 Download the latest release:
 
