@@ -14,7 +14,13 @@ Perfect for exploring large datasets from shell commands, system administration,
 
 ## Installation
 
-### Option 1: Download from GitHub Releases (Recommended)
+### Option 1: Install with Homebrew (macOS/Linux)
+
+```bash
+brew install janorga/tap/tablefy
+```
+
+### Option 2: Download from GitHub Releases (Recommended)
 
 Download the latest release:
 
@@ -24,7 +30,7 @@ chmod +x tablefy
 sudo mv tablefy /usr/local/bin/
 ```
 
-### Option 2: Build from Source
+### Option 3: Build from Source
 
 Requirements:
 - Go 1.25.4 or higher
